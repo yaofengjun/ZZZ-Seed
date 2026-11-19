@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Seed Seed's outfit change</title>
 <style>
+/* ===== 水印字体：方正艺黑简体（只保留「遥锋はるばる」6 个字，2KB） ===== */
+@font-face{
+  font-family:"YF Watermark";
+  src:local("方正艺黑简体"),
+      url("img/yf-watermark.woff2") format("woff2");
+  font-display:swap;
+}
 *{
   margin:0;
   padding:0;
@@ -149,7 +156,7 @@ h1{
   left:16px;
   bottom:14px;
   z-index:30;                 /* 在透视画布之上，擦的时候也一直看得见 */
-  font-family:"方正艺黑简体","FZYaHei-B05S","FZYHJW","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  font-family:"YF Watermark","方正艺黑简体","FZYaHei-B05S","FZYHJW","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
   font-size:clamp(18px, 10vw, 50px);   /* 桌面 50px；手机屏窄自动缩小，避免被裁掉 */
   line-height:1.2;
   letter-spacing:.14em;
