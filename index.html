@@ -30,17 +30,23 @@ body{
   position:fixed;
   top:50%;
   transform:translateY(-50%);
-  /* 中间内容列固定 900px，两侧剩余空间里放，最多 330px，绝不会压到图片 */
-  width:min(330px, calc((100vw - 948px) / 2));
+  /* 占满中线 900px 内容列左侧/右侧的空白区，在空白区里居中 */
+  width:calc((100vw - 900px) / 2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
   opacity:.92;
   pointer-events:none;
   z-index:2;
 }
+.social-side img{
+  width:min(330px, 100%);
+}
 .social-left{
-  left:20px;
+  left:0;
 }
 .social-right{
-  right:20px;
+  right:0;
 }
 .social-bottom{
   display:none;
@@ -143,8 +149,8 @@ h1{
   left:16px;
   bottom:14px;
   z-index:30;                 /* 在透视画布之上，擦的时候也一直看得见 */
-  font-family:"Hiragino Maru Gothic ProN","Yu Gothic","Microsoft YaHei",system-ui,sans-serif;
-  font-size:clamp(20px, 12vw, 60px);   /* 桌面 60px；手机屏窄会自动缩小，避免被裁掉 */
+  font-family:"方正艺黑简体","FZYaHei-B05S","FZYHJW","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  font-size:clamp(18px, 10vw, 50px);   /* 桌面 50px；手机屏窄自动缩小，避免被裁掉 */
   line-height:1.2;
   letter-spacing:.14em;
   color:rgba(130,130,130,.42);          /* 淡灰、半透明 */
