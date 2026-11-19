@@ -11,15 +11,49 @@
   box-sizing:border-box;
 }
 body{
-  /* ===== 网页背景图设置 ===== */
-  background-color:#fff;                       /* 和背景图的白底一致，边缘不会出现色块 */
-  background-image: url("img/bg.jpg");
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: contain;                    /* 整张图完整显示（改成 cover 会裁掉左右两侧的字） */
-  background-attachment: fixed;
+  /* ===== 网页背景 ===== */
+  background:#fff;
   padding:24px;
   font-family:system-ui;
+}
+
+/* ===== 联系方式：大屏固定在左右两侧，窄屏/手机自动落到底部 ===== */
+.social{
+  line-height:0;
+}
+.social img{
+  display:block;
+  width:100%;
+  height:auto;
+}
+.social-side{
+  position:fixed;
+  top:50%;
+  transform:translateY(-50%);
+  /* 中间内容列固定 900px，两侧剩余空间里放，最多 330px，绝不会压到图片 */
+  width:min(330px, calc((100vw - 948px) / 2));
+  opacity:.92;
+  pointer-events:none;
+  z-index:2;
+}
+.social-left{
+  left:20px;
+}
+.social-right{
+  right:20px;
+}
+.social-bottom{
+  display:none;
+  width:min(420px, 78vw);
+  margin:28px auto 8px;
+}
+@media (max-width:1299px){
+  .social-side{
+    display:none;
+  }
+  .social-bottom{
+    display:block;
+  }
 }
 h1{
   text-align:center;
@@ -199,6 +233,14 @@ h1{
 <body>
 <h1>❤️Seed's outfit change❤️</h1>
 
+<!-- ===== 联系方式：大屏左右两侧（固定不随页面滚动） ===== -->
+<div class="social social-side social-left">
+  <img src="img/social.png" alt="B站：遥锋はるばる / 黑X：Y.F.はるばる / 蓝P：Y.F.はるばる" />
+</div>
+<div class="social social-side social-right" aria-hidden="true">
+  <img src="img/social.png" alt="" />
+</div>
+
 <div class="control-panel" id="panelBox">
   <div id="categoryList"></div>
   <div class="btn-group">
@@ -219,6 +261,11 @@ h1{
 </div>
 
 <div class="img-wrap" id="imgBox"></div>
+
+<!-- ===== 联系方式：窄屏/手机显示在页面底部 ===== -->
+<div class="social social-bottom">
+  <img src="img/social.png" alt="B站：遥锋はるばる / 黑X：Y.F.はるばる / 蓝P：Y.F.はるばる" />
+</div>
 
 <script>
 // =========【在这里配置分类和图片】=========
