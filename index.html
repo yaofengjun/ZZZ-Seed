@@ -137,6 +137,24 @@ h1{
   user-select:none;
   -webkit-user-select:none;
 }
+/* ===== 图片区左下角的水印 ===== */
+.peek-watermark{
+  position:absolute;
+  left:16px;
+  bottom:14px;
+  z-index:30;                 /* 在透视画布之上，擦的时候也一直看得见 */
+  font-family:"Hiragino Maru Gothic ProN","Yu Gothic","Microsoft YaHei",system-ui,sans-serif;
+  font-size:12px;
+  line-height:1.2;
+  letter-spacing:.14em;
+  color:rgba(130,130,130,.42);          /* 淡灰、半透明 */
+  text-shadow:0 1px 2px rgba(255,255,255,.55);
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-select:none;
+  white-space:nowrap;
+  transition:opacity .3s ease;
+}
 .peek-canvas{
   position:absolute;
   top:0;
@@ -700,6 +718,16 @@ function initPeek(){
   const ring = document.createElement("div");
   ring.className = "peek-ring";
   imgBox.appendChild(ring);
+
+  // 图片区左下角水印（放在最上层，透视时也一直可见；不影响鼠标操作）
+  if(!imgBox.querySelector(".peek-watermark")){
+    const mark = document.createElement("div");
+    mark.className = "peek-watermark";
+    mark.textContent = "遥锋はるばる";
+    mark.setAttribute("aria-hidden", "true");
+    imgBox.appendChild(mark);
+    peek.watermark = mark;
+  }
 
   peek.canvas = canvas;
   peek.ctx = canvas.getContext("2d");
