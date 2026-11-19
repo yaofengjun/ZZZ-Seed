@@ -144,7 +144,7 @@ h1{
   bottom:14px;
   z-index:30;                 /* 在透视画布之上，擦的时候也一直看得见 */
   font-family:"Hiragino Maru Gothic ProN","Yu Gothic","Microsoft YaHei",system-ui,sans-serif;
-  font-size:12px;
+  font-size:clamp(20px, 12vw, 60px);   /* 桌面 60px；手机屏窄会自动缩小，避免被裁掉 */
   line-height:1.2;
   letter-spacing:.14em;
   color:rgba(130,130,130,.42);          /* 淡灰、半透明 */
