@@ -12,8 +12,11 @@
 }
 body{
   /* ===== 网页背景图设置 ===== */
-  background: url("img/bg.jpg") no-repeat center center;
-  background-size: cover;
+  background-color:#fff;                       /* 和背景图的白底一致，边缘不会出现色块 */
+  background-image: url("img/bg.jpg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;                    /* 整张图完整显示（改成 cover 会裁掉左右两侧的字） */
   background-attachment: fixed;
   padding:24px;
   font-family:system-ui;
@@ -92,6 +95,105 @@ h1{
 .img-wrap img.show{
   opacity:1;
 }
+
+/* ===== 透视（擦出下面的底图）功能 ===== */
+.img-wrap.peek-mode{
+  cursor:none;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.peek-canvas{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  z-index:20;
+  display:none;
+  pointer-events:none;
+  touch-action:none;
+}
+.img-wrap.peek-mode .peek-canvas{
+  display:block;
+  pointer-events:auto;
+}
+.peek-ring{
+  position:absolute;
+  left:-9999px;
+  top:-9999px;
+  width:90px;
+  height:90px;
+  border:2px solid rgba(255,255,255,.92);
+  box-shadow:0 0 0 1px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.18);
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  z-index:21;
+  display:none;
+}
+.img-wrap.peek-mode .peek-ring{
+  display:block;
+}
+.peek-tools{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px 18px;
+  margin-top:16px;
+  padding-top:12px;
+  border-top:1px solid #eee;
+  font-size:14px;
+  color:#444;
+}
+.peek-tools button{
+  padding:6px 14px;
+  border:none;
+  border-radius:6px;
+  background:#666;
+  color:#fff;
+  cursor:pointer;
+  font-family:inherit;
+  font-size:14px;
+  transition:background .2s ease;
+}
+.peek-tools button:hover{
+  background:#444;
+}
+.peek-tools button.active,
+.peek-tools button.active:hover{
+  background:#d1497a;
+}
+.peek-tools .range-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  user-select:none;
+}
+.peek-tools input[type="range"]{
+  width:120px;
+  accent-color:#d1497a;
+}
+.peek-tools .fade-wrap{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  user-select:none;
+}
+.peek-tools #peekSizeVal{
+  min-width:2.4em;
+  text-align:right;
+  color:#888;
+  font-variant-numeric:tabular-nums;
+}
+.peek-hint{
+  margin-top:10px;
+  font-size:12px;
+  line-height:1.7;
+  color:#999;
+}
 </style>
 </head>
 <body>
@@ -102,6 +204,18 @@ h1{
   <div class="btn-group">
     <button id="clearAll">清空所有</button>
   </div>
+  <!-- ===== 透视小道具 ===== -->
+  <div class="peek-tools">
+    <button id="peekToggle" title="开启后，在下面的图片上滑动鼠标/手指，就能擦出下面的底图">🔍 透视：关</button>
+    <label class="range-wrap">笔刷
+      <input id="peekSize" type="range" min="16" max="220" step="2" value="130">
+      <span id="peekSizeVal">130</span>
+    </label>
+    <label class="fade-wrap"><input id="peekFade" type="checkbox"> 笔迹自动消退</label>
+    <button id="peekClear">清除笔迹</button>
+  </div>
+  <div class="peek-hint">开启「透视」后，在图片上按住/滑动鼠标（手机直接拖动），划过的位置会露出下面的底图；勾选「笔迹自动消退」就是「手电筒」式：笔刷停下的地方一直保持，移开后慢慢恢复原样。</div>
+  <!-- ====================== -->
 </div>
 
 <div class="img-wrap" id="imgBox"></div>
@@ -113,6 +227,7 @@ const categoryList = [
        catName: "背景",
     layers: [
       {src:"img/26.PNG", name:"阴影"},
+      {src:"img/黑色背景.PNG", name:"黑色背景"},
     ]
   },
   {
@@ -122,6 +237,7 @@ const categoryList = [
       {src:"img/2.PNG", name:"表情2"},
       {src:"img/3.PNG", name:"表情3"},
       {src:"img/4.PNG", name:"表情4"},
+      {src:"img/表情5（神秘app）.PNG", name:"表情5（神秘app）"},
     ]
   },
   {
@@ -160,8 +276,9 @@ const categoryList = [
       {src:"img/15.PNG", name:"白丝雾气"},
       {src:"img/16.PNG", name:"白色激动"},
       {src:"img/17.PNG", name:"黑色激动"},
-      {src:"img/18.PNG", name:"汗珠无脚"},
       {src:"img/19.PNG", name:"肉色激动"},
+      {src:"img/18.PNG", name:"汗珠无脚"},
+      {src:"img/拟声词.PNG", name:"拟声词"},
       {src:"img/20.PNG", name:"汗珠"},
       {src:"img/21.PNG", name:"爱心"},
  
@@ -172,16 +289,466 @@ const categoryList = [
     layers: [
       {src:"img/22.PNG", name:"爱心眼1"},
       {src:"img/23.PNG", name:"爱心眼2"},
+      {src:"img/爱心眼3.PNG", name:"爱心眼3"},
       {src:"img/24.PNG", name:"伸舌头"},
       {src:"img/25.PNG", name:"嘴型1"},
+      {src:"img/嘴型2.PNG", name:"嘴型2"},
+      {src:"img/汁液.PNG", name:"汁液"},
     ]
   }
 ];
 // =========================================
 
+// =========【透视小道具 设置】=========
+const peekConfig = {
+  enabled: true,          // 打开网页时是否默认开启透视
+  // 透视时“下面”露出的那张图：
+  // 留空 "" = 自动跟随当前勾选的「表情」（勾了哪个就露出哪个，都没勾就用 fallbackSrc）
+  // 也可以直接写死一张图，例如 "img/4.PNG"（会忽略上面的自动逻辑）
+  src: "",
+  baseCategory: "表情",
+  fallbackSrc: "img/1.PNG",
+  brushSize: 130,         // 初始笔刷直径（屏幕像素）
+  fade: true,             // 笔迹自动消退（默认开：擦开的地方会跟着笔刷逐帧恢复；不想这样就在页面上取消勾选）
+  fadeMs: 1000            // 一笔从"完全透"到"完全恢复原样"要多久（毫秒），越小恢复越快
+};
+// =====================================
+
 const imgBox = document.getElementById('imgBox');
 const categoryListDom = document.getElementById('categoryList');
 const clearAllBtn = document.getElementById('clearAll');
+
+const peekToggleBtn = document.getElementById('peekToggle');
+const peekSizeEl = document.getElementById('peekSize');
+const peekSizeVal = document.getElementById('peekSizeVal');
+const peekFadeEl = document.getElementById('peekFade');
+const peekClearBtn = document.getElementById('peekClear');
+
+// 记录每个图层属于哪个分类，供“透视底图自动跟随表情”使用
+const layerCatalog = [];
+
+// =========【透视核心状态】=========
+const peek = {
+  ready: false,
+  on: false,
+  dpr: 1,
+  w: 0,
+  h: 0,
+  brush: 90,
+  canvas: null,
+  ctx: null,
+  ring: null,
+  mask: null,
+  maskCtx: null,
+  baseCanvas: null,
+  baseCtx: null,
+  baseImg: null,
+  baseSrc: "",
+  imgCache: new Map(),
+  pointerDown: false,
+  lastX: null,
+  lastY: null,
+  alpha: 1,
+  hasInk: false,
+  decayRaf: 0,
+  dabs: [],
+  brushSprite: null,
+  hovering: false,
+  hoverX: 0,
+  hoverY: 0
+};
+
+function resolvePeekSrc(){
+  if(peekConfig.src) return peekConfig.src;
+  const checked = new Set();
+  document.querySelectorAll('#categoryList input[type="checkbox"]:checked').forEach(cb=>{
+    checked.add(cb.dataset.src);
+  });
+  for(let i = 0; i < layerCatalog.length; i++){
+    const layer = layerCatalog[i];
+    if(layer.cat === peekConfig.baseCategory && checked.has(layer.src)){
+      return layer.src;
+    }
+  }
+  return peekConfig.fallbackSrc;
+}
+
+function getPeekImage(src){
+  let img = peek.imgCache.get(src);
+  if(img) return img;
+  img = new Image();
+  img.decoding = "async";
+  img.onload = function(){
+    if(peek.baseSrc === src){
+      peek.baseImg = img;
+      buildBaseCanvas();
+      renderPeek();
+    }
+  };
+  peek.imgCache.set(src, img);
+  img.src = src;
+  return img;
+}
+
+function updatePeekBase(){
+  if(!peek.ready) return;
+  const src = resolvePeekSrc();
+  if(src === peek.baseSrc) return;
+  peek.baseSrc = src;
+  peek.baseImg = getPeekImage(src);
+  if(peek.baseImg.complete && peek.baseImg.naturalWidth){
+    buildBaseCanvas();
+    renderPeek();
+  }
+}
+
+function buildBaseCanvas(){
+  const c = peek.baseCanvas;
+  if(!c || !peek.canvas) return;
+  const cw = peek.canvas.width;
+  const ch = peek.canvas.height;
+  if(!cw || !ch) return;
+  c.width = cw;
+  c.height = ch;
+  const ctx = peek.baseCtx;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,cw,ch);
+  if(peek.baseImg && peek.baseImg.complete && peek.baseImg.naturalWidth){
+    ctx.drawImage(peek.baseImg, 0, 0, cw, ch);
+  }
+}
+
+function resizePeekCanvas(){
+  if(!peek.canvas) return;
+  const w = imgBox.clientWidth;
+  const h = imgBox.clientHeight;
+  if(w < 2 || h < 2) return;
+  const dpr = peek.dpr;
+  const cw = Math.round(w * dpr);
+  const ch = Math.round(h * dpr);
+  if(peek.canvas.width === cw && peek.canvas.height === ch){
+    peek.w = w;
+    peek.h = h;
+    return;
+  }
+
+  // 窗口尺寸变化时，把已经画好的笔迹按比例保留下来
+  let snapshot = null;
+  // 图片还没加载完时 imgBox 只有 min-height（100px），这时候的笔迹不要拉伸放大，直接丢掉
+  if(peek.mask.width && peek.mask.height && peek.mask.height > 150){
+    snapshot = document.createElement('canvas');
+    snapshot.width = peek.mask.width;
+    snapshot.height = peek.mask.height;
+    snapshot.getContext('2d').drawImage(peek.mask, 0, 0);
+  }
+
+  peek.canvas.width = cw;
+  peek.canvas.height = ch;
+  peek.mask.width = cw;
+  peek.mask.height = ch;
+  if(snapshot){
+    peek.maskCtx.setTransform(1,0,0,1,0,0);
+    peek.maskCtx.drawImage(snapshot, 0, 0, cw, ch);
+  }
+
+  peek.w = w;
+  peek.h = h;
+  buildBaseCanvas();
+  renderPeek();
+}
+
+function renderPeek(){
+  const c = peek.canvas;
+  const ctx = peek.ctx;
+  if(!c || !ctx || !c.width || !c.height) return;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = "source-over";
+  ctx.clearRect(0,0,c.width,c.height);
+  if(!peek.baseCanvas || !peek.baseCanvas.width) return;
+  ctx.globalAlpha = peek.alpha;
+  ctx.drawImage(peek.baseCanvas, 0, 0);
+  ctx.globalAlpha = 1;
+  // 用笔迹蒙版裁掉底图，只保留“画过”的地方
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.drawImage(peek.mask, 0, 0);
+  ctx.globalCompositeOperation = "source-over";
+}
+
+function paintDab(x, y, when){
+  const dpr = peek.dpr;
+  const t = when === undefined ? performance.now() : when;
+  // 开了「自动消退」就按时间记下每一笔，蒙版每一帧按笔迹的年龄重画
+  if(peekConfig.fade){
+    peek.dabs.push({ x: x, y: y, r: peek.brush / 2, t: t });
+    if(peek.dabs.length > 1500) peek.dabs.splice(0, peek.dabs.length - 1500);
+  }
+  const ctx = peek.maskCtx;
+  const cx = x * dpr;
+  const cy = y * dpr;
+  const r = Math.max(1, (peek.brush / 2) * dpr);
+  const g = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r);
+  g.addColorStop(0, "rgba(255,255,255,1)");
+  g.addColorStop(0.72, "rgba(255,255,255,0.92)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function paintStroke(x, y){
+  peek.alpha = 1;
+  peek.hasInk = true;
+
+  const r = Math.max(1, peek.brush / 2);
+  const step = Math.max(1.5, r * 0.18);
+  if(peek.lastX == null || peek.lastY == null){
+    paintDab(x, y);
+  }else{
+    const dx = x - peek.lastX;
+    const dy = y - peek.lastY;
+    const dist = Math.hypot(dx, dy);
+    const n = Math.max(1, Math.ceil(dist / step));
+    for(let i = 1; i <= n; i++){
+      paintDab(peek.lastX + dx * i / n, peek.lastY + dy * i / n);
+    }
+  }
+  peek.lastX = x;
+  peek.lastY = y;
+  renderPeek();
+  // 开了「自动消退」就启动逐帧衰减：笔刷离开哪里，哪里就一点点恢复
+  if(peekConfig.fade) startDecayLoop();
+}
+
+function paintFromEvent(e){
+  if(!peek.on || !peek.w || !peek.h) return;
+  const rect = peek.canvas.getBoundingClientRect();
+  if(!rect.width || !rect.height) return;
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  if(x < 0 || y < 0 || x > rect.width || y > rect.height){
+    // 移出图片范围时断开这一笔，避免再进来时连出一条直线
+    peek.hovering = false;
+    peek.lastX = null;
+    peek.lastY = null;
+    return;
+  }
+  peek.hovering = true;
+  peek.hoverX = x;
+  peek.hoverY = y;
+  paintStroke(x, y);
+}
+
+function moveRing(e){
+  if(!peek.ring) return;
+  const rect = imgBox.getBoundingClientRect();
+  peek.ring.style.display = "block";
+  peek.ring.style.left = (e.clientX - rect.left) + "px";
+  peek.ring.style.top = (e.clientY - rect.top) + "px";
+}
+
+function setPeekBrush(v){
+  const size = Math.max(8, Math.min(300, Number(v) || 90));
+  peek.brush = size;
+  if(peek.ring){
+    peek.ring.style.width = size + "px";
+    peek.ring.style.height = size + "px";
+  }
+}
+
+// ===== 逐帧恢复：笔刷在哪里，哪里才透；一离开就按帧淡回去 =====
+// 蒙版每帧按"笔迹年龄"整块重画：到点就整条消失，不会留下半透明的淡印子
+function startDecayLoop(){
+  if(peek.decayRaf || !peekConfig.fade || !peek.on || !peek.hasInk) return;
+  peek.decayRaf = requestAnimationFrame(decayStep);
+}
+
+function decayStep(now){
+  peek.decayRaf = 0;
+  if(!peekConfig.fade || !peek.on) return;
+  const life = Math.max(150, peekConfig.fadeMs);
+  // 笔刷停在哪里，哪里就一直亮着：每一帧都补一枚"新鲜"的笔迹
+  if(peek.hovering){
+    peek.dabs.push({ x: peek.hoverX, y: peek.hoverY, r: peek.brush / 2, t: now });
+  }
+  const alive = [];
+  for(let i = 0; i < peek.dabs.length; i++){
+    if(now - peek.dabs[i].t < life) alive.push(peek.dabs[i]);
+  }
+  peek.dabs = alive;
+
+  const ctx = peek.maskCtx;
+  ctx.save();
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0, 0, peek.mask.width, peek.mask.height);
+  if(!alive.length){
+    ctx.restore();
+    peek.alpha = 1;
+    peek.hasInk = false;
+    renderPeek();
+    return;
+  }
+  const sprite = peek.brushSprite;
+  for(let i = 0; i < alive.length; i++){
+    const d = alive[i];
+    const a = 1 - (now - d.t) / life;
+    if(a <= 0) continue;
+    const r = Math.max(1, d.r * peek.dpr);
+    ctx.globalAlpha = a;
+    ctx.drawImage(sprite, d.x * peek.dpr - r, d.y * peek.dpr - r, r * 2, r * 2);
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  peek.alpha = 1;
+  peek.hasInk = true;
+  renderPeek();
+  peek.decayRaf = requestAnimationFrame(decayStep);
+}
+
+function clearPeek(){
+  if(!peek.maskCtx) return;
+  if(peek.decayRaf){
+    cancelAnimationFrame(peek.decayRaf);
+    peek.decayRaf = 0;
+  }
+  peek.dabs = [];
+  peek.maskCtx.setTransform(1,0,0,1,0,0);
+  peek.maskCtx.clearRect(0,0,peek.mask.width,peek.mask.height);
+  peek.alpha = 1;
+  peek.lastX = null;
+  peek.lastY = null;
+  peek.hasInk = false;
+  renderPeek();
+}
+
+function setPeekMode(on){
+  peek.on = !!on;
+  imgBox.classList.toggle("peek-mode", peek.on);
+  if(peekToggleBtn){
+    peekToggleBtn.classList.toggle("active", peek.on);
+    peekToggleBtn.textContent = peek.on ? "🔍 透视：开" : "🔍 透视：关";
+  }
+  if(!peek.on){
+    peek.pointerDown = false;
+    peek.hovering = false;
+    peek.lastX = null;
+    peek.lastY = null;
+    if(peek.ring) peek.ring.style.display = "none";
+    peek.alpha = 1;
+    // 关掉透视就当作恢复原样：把已经擦出来的地方一并清掉
+    if(peek.maskCtx) clearPeek();
+  }
+  renderPeek();
+}
+
+function initPeek(){
+  if(peek.ready) return;
+
+  const canvas = document.createElement("canvas");
+  canvas.className = "peek-canvas";
+  canvas.setAttribute("aria-hidden", "true");
+  imgBox.appendChild(canvas);
+
+  const ring = document.createElement("div");
+  ring.className = "peek-ring";
+  imgBox.appendChild(ring);
+
+  peek.canvas = canvas;
+  peek.ctx = canvas.getContext("2d");
+  peek.ring = ring;
+  peek.dpr = Math.min(window.devicePixelRatio || 1, 2);
+  peek.mask = document.createElement("canvas");
+  peek.maskCtx = peek.mask.getContext("2d");
+  peek.baseCanvas = document.createElement("canvas");
+  peek.baseCtx = peek.baseCanvas.getContext("2d");
+  // 笔刷贴图：每帧重画蒙版时直接 drawImage，比每次新建渐变快得多
+  peek.brushSprite = (function(){
+    const s = 128;
+    const c = document.createElement("canvas");
+    c.width = s;
+    c.height = s;
+    const g = c.getContext("2d");
+    const grd = g.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+    grd.addColorStop(0, "rgba(255,255,255,1)");
+    grd.addColorStop(0.72, "rgba(255,255,255,0.92)");
+    grd.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = grd;
+    g.fillRect(0, 0, s, s);
+    return c;
+  })();
+  peek.ready = true;
+
+  resizePeekCanvas();
+  setPeekBrush(peekConfig.brushSize);
+  if(peekSizeEl){
+    peekSizeEl.value = String(peekConfig.brushSize);
+    peekSizeVal.textContent = String(peekConfig.brushSize);
+  }
+  if(peekFadeEl) peekFadeEl.checked = !!peekConfig.fade;
+
+  canvas.addEventListener("pointerdown", function(e){
+    if(!peek.on) return;
+    peek.pointerDown = true;
+    peek.lastX = null;
+    peek.lastY = null;
+    try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+    moveRing(e);
+    paintFromEvent(e);
+    e.preventDefault();
+  });
+
+  canvas.addEventListener("pointermove", function(e){
+    if(!peek.on) return;
+    moveRing(e);
+    if(e.pointerType === "touch" && !peek.pointerDown) return;
+    paintFromEvent(e);
+  });
+
+  function endStroke(){
+    peek.pointerDown = false;
+    peek.lastX = null;
+    peek.lastY = null;
+  }
+  canvas.addEventListener("pointerup", endStroke);
+  canvas.addEventListener("pointercancel", endStroke);
+  canvas.addEventListener("pointerleave", function(){
+    if(peek.ring) peek.ring.style.display = "none";
+    peek.hovering = false;
+    peek.lastX = null;
+    peek.lastY = null;
+  });
+
+  if(peekToggleBtn){
+    peekToggleBtn.addEventListener("click", function(){
+      setPeekMode(!peek.on);
+    });
+  }
+  if(peekSizeEl){
+    peekSizeEl.addEventListener("input", function(e){
+      setPeekBrush(e.target.value);
+      if(peekSizeVal) peekSizeVal.textContent = String(peek.brush);
+    });
+  }
+  if(peekFadeEl){
+    peekFadeEl.addEventListener("change", function(e){
+      peekConfig.fade = !!e.target.checked;
+      // 从"擦开就留着"切换到"手电筒"模式：旧笔迹直接收掉，之后跟着笔刷走
+      if(peekConfig.fade && peek.hasInk) clearPeek();
+    });
+  }
+  if(peekClearBtn){
+    peekClearBtn.addEventListener("click", clearPeek);
+  }
+
+  if(window.ResizeObserver){
+    new ResizeObserver(function(){ resizePeekCanvas(); }).observe(imgBox);
+  }
+  window.addEventListener("resize", resizePeekCanvas);
+
+  setPeekMode(!!peekConfig.enabled);
+  updatePeekBase();
+}
 
 function init(){
   categoryListDom.innerHTML = '';
@@ -198,6 +765,7 @@ function init(){
     contentWrap.className = 'category-content';
 
     cat.layers.forEach(layer=>{
+      layerCatalog.push({src: layer.src, name: layer.name, cat: cat.catName});
       const label = document.createElement('label');
       label.className = 'check-item';
       label.innerHTML = `<input type="checkbox" data-src="${layer.src}"> ${layer.name}`;
@@ -227,6 +795,7 @@ function init(){
     categoryListDom.appendChild(catWrap);
   })
   refreshView();
+  initPeek();
 }
 
 function refreshView(){
@@ -241,6 +810,8 @@ function refreshView(){
       img.classList.remove('show');
     }
   })
+  // 勾选「表情」后，透视露出的底图跟着换成对应的表情
+  updatePeekBase();
 }
 
 clearAllBtn.onclick = ()=>{
